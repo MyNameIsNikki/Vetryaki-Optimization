@@ -1,0 +1,11 @@
+{
+  "predicted_parameters": {
+    "altitude": 150.0,
+    "speed_mps": 15.0,
+    "priority": "shortest"
+  },
+  "predicted_metrics": {
+    "fitness_score": 0.0002477903035469353,
+    "total_distance_m": 0.0,
+    "total_time_min": 0.0,
+    "battery_consumption": 

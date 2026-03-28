@@ -1,0 +1,57 @@
+@"
+# Python
+__pycache__/
+.venv/
+venv/
+*.pyc
+*.pyo
+
+# Node modules
+node_modules/
+electron/node_modules/
+renderer/node_modules/
+**/node_modules/
+
+# Large files
+*.exe
+*.pkg
+*.dmg
+*.app
+*.msi
+*.iso
+*.bin
+*.tar.gz
+*.zip
+
+# Build artifacts
+server/src/api/build/
+server/src/api/dist/
+electron/dist/
+build/
+dist/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Configs with passwords
+server/assets/configs/database.ini
+*.ini
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+server/src/api/logs/
+
+# Uploads
+server/src/uploads/
+temp_*.jpg
+"@ | Out-File -FilePath .gitignore -Encoding UTF8

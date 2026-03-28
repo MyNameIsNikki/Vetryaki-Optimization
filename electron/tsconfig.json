@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "outDir": "dist",
+    "sourceMap": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "../renderer", "dist"]
+}

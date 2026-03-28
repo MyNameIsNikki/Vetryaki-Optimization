@@ -1,0 +1,20 @@
+{
+    "predicted_parameters": {
+        "altitude": 90.0,
+        "speed": 54.0,
+        "priority": "shortest"
+    },
+    "predicted_metrics": {
+        "fitness_score": 0.20021228175249423,
+        "total_distance_km": 3.9946985831579345,
+        "total_time_min": 4.438553981286594,
+        "battery_consumption": 39.94698583157935,
+        "safety_risk": 0.3,
+        "route_suitability": 0.08416345694942055
+    },
+    "metadata": {
+        "status": "success",
+        "timestamp": "2025-08-03T16:24:08.234497Z",
+        "algorithm": "GA-Predictor"
+    }
+}

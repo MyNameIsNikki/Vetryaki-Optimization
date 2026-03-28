@@ -1,0 +1,12 @@
+{
+    "Информация о симуляции" : "Information about the simulation",
+    "Статус маршрута:" :  "Route status:",
+    "Статус погоды:" : "Weather status:",
+    "Локальные данные:" : "Local data:",
+    "Готовность:" : "Readiness:",
+    "Найдены" : "Found",
+    "Отсутствуют" : "None",
+    "Загружен" : "Loaded",
+    "Не загружен" : "Not loaded",
+    "Building route..." : "Building route... This may take up to 1-10 minutes."
+}

@@ -1,0 +1,21 @@
+{
+  "name": "wind-turbine-app",
+  "version": "1.0.0",
+  "main": "electron/index.js",
+  "scripts": {
+    "start": "concurrently \"npm run start:renderer\" \"npm run start:electron\"",
+    "start:renderer": "cd renderer && npm start",
+    "start:electron": "cd electron && npm start",
+    "build:renderer": "cd renderer && npm run build",
+    "package": "npm run build:renderer && cd electron && npm run package",
+    "make": "npm run build:renderer && cd electron && npm run make"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.3.0",
+    "@types/three": "^0.180.0",
+    "three": "^0.180.0"
+  }
+}

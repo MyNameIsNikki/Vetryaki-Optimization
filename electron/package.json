@@ -1,0 +1,93 @@
+{
+  "name": "wind-turbine-electron",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "concurrently \"vite\" \"tsc && electron-forge start\"",
+    "build": "vite build",
+    "package": "vite build && tsc && electron-forge package",
+    "make": "vite build && tsc && electron-forge make",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "axios": "^1.10.0",
+    "custom-electron-titlebar": "^4.2.8",
+    "electron-is-dev": "^3.0.1",
+    "electron-log": "^5.4.1",
+    "electron-squirrel-startup": "^1.0.1",
+    "electron-updater": "^6.6.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.3",
+    "socket.io-client": "^4.8.1",
+    "styled-components": "^6.1.19",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
+    "@electron-forge/maker-squirrel": "^7.8.1",
+    "@electron-forge/maker-zip": "^7.8.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
+    "@electron-forge/plugin-fuses": "^7.8.1",
+    "@electron/fuses": "^1.8.0",
+    "@types/electron-is-dev": "^0.3.0",
+    "@types/node": "^24.0.13",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "autoprefixer": "^10.4.21",
+    "electron": "^37.2.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "ts-node": "^10.9.2",
+    "vite": "^7.0.4",
+    "vite-plugin-pwa": "^1.0.1",
+    "vitest": "^3.2.4"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "asar": true,
+        "extraResource": [
+          "dist"
+        ]
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel"
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb"
+        },
+        {
+          "name": "@electron-forge/maker-rpm"
+        }
+      ],
+      "plugins": [
+        {
+          "name": "@electron-forge/plugin-auto-unpack-natives",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/plugin-fuses",
+          "config": {}
+        }
+      ]
+    }
+  },
+  "description": "",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
