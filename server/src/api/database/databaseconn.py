@@ -2,23 +2,16 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
+from .config import load_config
 
-# Устанавливаем переменные окружения явно
-os.environ['PGCLIENTENCODING'] = 'UTF8'
+config = load_config()
+SQLALCHEMY_DATABASE_URL = f"postgresql://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['dbname']}"
 
-# Используем простую строку подключения
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/wind_turbine_db"
-
-print("Database URL:", SQLALCHEMY_DATABASE_URL.replace("postgres", "***"))
+print(f"Connecting to: postgresql://{config['user']}:***@{config['host']}:{config['port']}/{config['dbname']}")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,
-    connect_args={
-        'client_encoding': 'utf8',
-        'options': '-c client_encoding=utf8'
-    }
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

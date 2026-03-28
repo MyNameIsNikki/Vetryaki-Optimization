@@ -22,6 +22,19 @@ router = APIRouter(prefix="/api", tags=["api"])
 UPLOAD_DIR = "./uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+import psycopg2
+import os
+
+def get_db_connection():
+    os.environ['PGCLIENTENCODING'] = 'UTF8'
+    return psycopg2.connect(
+        host="localhost",
+        port="5432",
+        user="postgres",
+        password="password",
+        database="wind_turbine_db"
+    )
+
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...), request_id: str = None):
     if not file.filename.endswith(".kml"):
@@ -136,29 +149,78 @@ def get_optimized_path_from_mission(
     max_gen: int = 200,
     mutation_rate: float = 0.1,
     crossover_rate: float = 0.8,
-    db: Session = Depends(get_db)
 ):
+    """Получение оптимизированного маршрута из данных миссии в БД"""
     try:
-        mission = db.query(InspectionMissionWind).filter(
-            InspectionMissionWind.mission_id == mission_id
-        ).first()
+        print(f"\n=== GETTING DATA FROM DATABASE ===")
+        print(f"Mission ID: {mission_id}")
+        print(f"Height: {height}")
+        print(f"Optimizer: {optimizer}")
         
-        if not mission:
-            raise HTTPException(status_code=404, detail=f"Миссия {mission_id} не найдена")
+        # Подключаемся к БД через psycopg2
+        import psycopg2
+        import os
+        import tempfile
         
-        turbines_count = db.query(MissionWindTurbines).filter(
-            MissionWindTurbines.mission_id == mission_id
-        ).count()
+        os.environ['PGCLIENTENCODING'] = 'UTF8'
         
-        if turbines_count == 0:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"В миссии {mission_id} нет назначенных турбин"
-            )
+        conn = psycopg2.connect(
+            host="localhost",
+            port="5432",
+            user="postgres",
+            password="password",
+            database="wind_turbine_db"
+        )
         
+        cur = conn.cursor()
+        
+        # Получаем турбины для миссии
+        cur.execute("""
+            SELECT wt.id, wt.name, wt.latitude, wt.longitude, wt.hub_height 
+            FROM mission_wind_turbines mwt
+            JOIN wind_turbine wt ON mwt.object_id = wt.id
+            WHERE mwt.mission_id = %s
+            ORDER BY mwt.inspection_order
+        """, (mission_id,))
+        
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        print(f"Found {len(rows)} turbines in database:")
+        for row in rows:
+            print(f"  - ID: {row[0]}, Name: {row[1]}, Lat: {row[2]}, Lon: {row[3]}, Height: {row[4]}")
+        
+        if not rows:
+            raise HTTPException(status_code=404, detail=f"No turbines found for mission {mission_id}")
+        
+        # Создаем временный KML файл из данных БД
+        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.kml', delete=False, encoding='utf-8')
+        temp_file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        temp_file.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
+        temp_file.write('<Document>\n')
+        
+        for i, row in enumerate(rows):
+            turbine_id, name, lat, lon, hub_height = row
+            # Используем переданную высоту полета, а не высоту башни
+            temp_file.write(f'<Placemark>\n')
+            temp_file.write(f'<name>{name}</name>\n')
+            temp_file.write(f'<description>Turbine ID: {turbine_id}</description>\n')
+            temp_file.write(f'<Point>\n')
+            temp_file.write(f'<coordinates>{lon},{lat},{height}</coordinates>\n')
+            temp_file.write(f'</Point>\n')
+            temp_file.write(f'</Placemark>\n')
+        
+        temp_file.write('</Document>\n')
+        temp_file.write('</kml>\n')
+        temp_file.close()
+        
+        kml_file = temp_file.name
+        print(f"Created temp KML file: {kml_file}")
+        
+        # Вызываем оптимизатор
         drone_path, path_length = RouterService.get_optimized_path(
-            db_session=db,
-            mission_id=mission_id,
+            kml_file=kml_file,
             height=height,
             optimizer=optimizer,
             start=start,
@@ -174,31 +236,49 @@ def get_optimized_path_from_mission(
             mutation_rate=mutation_rate,
             crossover_rate=crossover_rate
         )
-
+        
+        print(f"Optimized path length: {path_length} meters")
+        print(f"Path order: {[p['id'] for p in drone_path['path']]}")
+        
+        # Удаляем временный файл
+        import os as os_module
+        os_module.unlink(kml_file)
+        print(f"Deleted temp KML file: {kml_file}")
+        
         response = TurbinePathResponse(
             turbines=drone_path["turbines"],
             path=drone_path["path"],
             path_length_meters=path_length
         )
+        
+        print(f"Returning {len(response.turbines)} turbines and {len(response.path)} path points")
+        print("=== DATA FROM DATABASE SUCCESSFULLY PROCESSED ===\n")
+        
         return response
         
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка сервера: {str(e)}")
+        print(f"Error in get_optimized_path_from_mission: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/missions/list")
-def get_missions_list(
-    db: Session = Depends(get_db)
-):
+def get_missions_list():
     """Получение списка всех миссий"""
     try:
-        from sqlalchemy import text
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT mission_id, mission_type, drone_altitude, max_duration_min, 
+                   wind_speed_max, precipitation_max, temperature_min, temperature_max, 
+                   uav_model_id, mission_date, status 
+            FROM inspection_mission_wind 
+            ORDER BY mission_date DESC
+        """)
         
-        # Используем сырой SQL для обхода проблем с ORM
-        result = db.execute(text("SELECT mission_id, mission_type, drone_altitude, max_duration_min, wind_speed_max, precipitation_max, temperature_min, temperature_max, uav_model_id, mission_date, status FROM inspection_mission_wind ORDER BY mission_date DESC"))
-        
-        rows = result.fetchall()
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
         
         missions = []
         for row in rows:
@@ -216,43 +296,50 @@ def get_missions_list(
                 "status": row[10]
             })
         
-        print(f"Found {len(missions)} missions")
         return missions
         
     except Exception as e:
         print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
-
-@router.get("/turbines")
-def get_all_turbines(
-    status: Optional[str] = None,
-    db: Session = Depends(get_db)
-):
-    query = db.query(WindTurbine)
-    if status:
-        query = query.filter(WindTurbine.condition_status == status)
+        raise HTTPException(status_code=500, detail=str(e))
     
-    turbines = query.all()
-    return [
-        {
-            "id": t.id,
-            "name": t.name,
-            "type": t.type,
-            "latitude": float(t.latitude),
-            "longitude": float(t.longitude),
-            "hub_height": t.hub_height,
-            "rotor_diameter": t.rotor_diameter,
-            "capacity_kw": t.capacity_kw,
-            "manufacturer": t.manufacturer,
-            "priority": t.priority,
-            "safe_distance_m": t.safe_distance_m,
-            "last_inspection_date": t.last_inspection_date.isoformat() if t.last_inspection_date else None,
-            "condition_status": t.condition_status
-        }
-        for t in turbines
-    ]
+@router.get("/turbines")
+def get_all_turbines():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, name, type, latitude, longitude, hub_height, rotor_diameter, 
+                   capacity_kw, manufacturer, priority, safe_distance_m, last_inspection_date, condition_status
+            FROM wind_turbine
+            WHERE status = 'active' OR condition_status IS NOT NULL
+        """)
+        
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        turbines = []
+        for row in rows:
+            turbines.append({
+                "id": row[0],
+                "name": row[1],
+                "type": row[2],
+                "latitude": float(row[3]),
+                "longitude": float(row[4]),
+                "hub_height": row[5],
+                "rotor_diameter": row[6],
+                "capacity_kw": row[7],
+                "manufacturer": row[8],
+                "priority": row[9],
+                "safe_distance_m": row[10],
+                "last_inspection_date": row[11].isoformat() if row[11] else None,
+                "condition_status": row[12]
+            })
+        
+        return turbines
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/missions")
 def create_mission(
