@@ -1,12 +1,3 @@
-<div style="display: flex; justify-content: center">
-    <h1>WTM Wind Turbine Maintenance</h1>
-</div>
-
-<div style="width: 100%; text-align: center; position: relative;">
-    <picture style="display: block; margin: 0 auto; max-width: 100%;">
-        <img style="max-width: 1000px; height: auto;" src="renderer/images/home/windturbines.jpg"/>
-</div>
-
 # 🌬️ WTM — Wind Turbine Maintenance System
 
 <p align="center">
@@ -112,7 +103,7 @@ cd Vetryaki-Optimization
 ### 2. Настройка PostgreSQL
 
 ```sql
-CREATE DATABASE wind_turbine_db;
+CREATE DATABASE wind_turbine_db; #Ну или как там вы назвали Вашу БД
 ```
 
 Создай файл:
@@ -122,7 +113,7 @@ server/assets/configs/database.ini
 ```
 
 ```ini
-[postgresql]
+[postgresql] #Тут пишите Ваше подключение
 host=localhost
 port=5432
 user=postgres
@@ -147,8 +138,8 @@ cd src
 uvicorn api.main:app --reload
 ```
 
-📍 API: http://127.0.0.1:8000
-📄 Swagger: http://127.0.0.1:8000/docs
+📍 Weather API: https://open-meteo.com/
+📄 Yolo Docs + API: https://docs.ultralytics.com/platform/api/#get-api-key
 
 ---
 
@@ -178,7 +169,7 @@ docker-compose up -d
 
 | Метод | Endpoint             | Описание          |
 | ----- | -------------------- | ----------------- |
-| POST  | `/api/upload`        | Загрузка KML      |
+| POST  | `/api/upload`        | Загрузка KML/DB   |
 | POST  | `/api/dronepath_aco` | ACO маршрут       |
 | POST  | `/api/dronepath_ga`  | GA маршрут        |
 | POST  | `/api/detect`        | Детекция дефектов |
